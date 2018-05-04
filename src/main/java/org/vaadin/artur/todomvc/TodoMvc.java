@@ -20,8 +20,6 @@ import com.vaadin.flow.templatemodel.TemplateModel;
 @Viewport("width=device-width, initial-scale=1.0")
 public class TodoMvc extends PolymerTemplate<TodoMvc.TodoMvcModel> {
 
-	@Id("newTodoInput")
-	private TextField newTodoInput;
 	private int nextId = 0;
 
 	public interface TodoMvcModel extends TemplateModel {
@@ -37,14 +35,9 @@ public class TodoMvc extends PolymerTemplate<TodoMvc.TodoMvcModel> {
 		items.add(new Todo("Another thing"));
 		items.add(new Todo("Done deal", true));
 		getModel().setTodos(items);
-
-		newTodoInput.getElement().addEventListener("keyup", e -> {
-			newTodoInput.clear();
-			String value = e.getEventData().getString("element.value");
-			addTodo(value);
-		}).addEventData("element.value").setFilter("event.keyCode == 13");
 	}
 
+	@ClientCallable
 	public void addTodo(String text) {
 		getModel().getTodos().add(new Todo(text, nextId++));
 	}
