@@ -1,0 +1,124 @@
+<link rel="import" href="bower_components/polymer/polymer.html">
+<link rel="import" href="bower_components/vaadin-ordered-layout/src/vaadin-horizontal-layout.html">
+<link rel="import" href="bower_components/vaadin-button/src/vaadin-button.html">
+<link rel="import" href="bower_components/polymer/lib/elements/dom-repeat.html">
+<link rel="import" href="bower_components/vaadin-checkbox/src/vaadin-checkbox.html">
+<link rel="import" href="bower_components/vaadin-text-field/src/vaadin-text-field.html">
+<link rel="import" href="bower_components/vaadin-ordered-layout/src/vaadin-vertical-layout.html">
+
+<dom-module id="todo-mvc">
+    <template>
+        <h1>todos</h1>
+        <vaadin-vertical-layout style="width: 100%;max-width: 600px;">
+            <vaadin-horizontal-layout style="width: 100%;">
+                <vaadin-button on-click="selectAll">
+                    Select all
+                </vaadin-button>
+                <vaadin-text-field style="flex: 1" placeholder="What needs to be done?" id="newTodoInput"></vaadin-text-field>
+            </vaadin-horizontal-layout>
+            <template is="dom-repeat" items="{{todos}}" filter="{{createFilter(filterString)}}" observe="completed">
+                <vaadin-horizontal-layout style="width: 100%" id="vaadinHorizontalLayout">
+                    <vaadin-checkbox checked="[[item.completed]]" on-checked-changed="markCompletedClick"></vaadin-checkbox>
+                    <vaadin-text-field style="flex:1" value="{{item.text}}" id="vaadinTextField"></vaadin-text-field>
+                    <vaadin-button on-click="removeTodo">
+                        X
+                    </vaadin-button>
+                </vaadin-horizontal-layout>
+            </template>
+            <div style="width: 100%;">
+                {{itemsLeft}} items left
+                <vaadin-horizontal-layout style="flex: 1" id="filterControls">
+                    <vaadin-button on-click="filterAll" disabled="{{isAll(filterString)}}">
+                        All
+                    </vaadin-button>
+                    <vaadin-button on-click="filterActive" disabled="{{isActive(filterString)}}">
+                        Active
+                    </vaadin-button>
+                    <vaadin-button on-click="filterCompleted" disabled="{{isCompleted(filterString)}}">
+                        Completed
+                    </vaadin-button>
+                </vaadin-horizontal-layout>
+                <vaadin-button hidden$="{{!hasCompletedItems(todos.*)}}" on-click="clearCompleted">
+                    Clear completed
+                </vaadin-button>
+            </div>
+        </vaadin-vertical-layout>
+    </template>
+    <script>
+        class TodoMvc extends Polymer.Element {
+            static get is() {
+                return 'todo-mvc';
+            }
+            static get properties() {
+                // These are purely client side UI logic properties
+                return {
+                    "filterString": {
+                        type: String,
+                        value: "all"
+                    },
+                    "itemsLeft": {
+                        type: String,
+                        computed: 'countItemsLeft(todos.*)'
+                    }
+                }
+            }
+            clearCompleted() {
+                this.todos.filter(item => item.completed).forEach(item => this.$server.removeTodo(item));
+            }
+            hasCompletedItems(todos) {
+                return this.todos.filter(item => item.completed).length > 0;
+            }
+            countItemsLeft(changeRecord) {
+                return this.todos.filter(item => !item.completed).length;
+            }
+            isFilter(filter) {
+                return this.filter == filter;
+            }
+            removeTodo(e) {
+                const item = e.model.item;
+                this.$server.removeTodo(item);
+            }
+            markCompletedClick(e) {
+                const item = e.model.item;
+                this.markCompleted(item, e.target.checked);
+            }
+            markCompleted(item, completed) {
+                if (item.completed == completed)
+                    return;
+                this.$server.markCompleted(item, completed);
+                item.completed = completed;
+            }
+            createFilter(filterString) {
+                return function (item) {
+                    return (filterString == "all"
+                        || (filterString == "active" && !item.completed)
+                        || (filterString == "completed" && item.completed)
+                    );
+                };
+            }
+            selectAll() {
+                const newState = (this.countItemsLeft() > 0);
+                this.todos.filter(item => item.completed != newState).forEach(item => this.markCompleted(item, newState));
+            }
+            filterAll() {
+                this.filterString = "all";
+            }
+            isAll(filterString) {
+                return filterString == "all";
+            }
+            filterActive() {
+                this.filterString = "active";
+            }
+            isActive(filterString) {
+                return filterString == "active";
+            }
+            filterCompleted() {
+                this.filterString = "completed";
+            }
+            isCompleted(filterString) {
+                return filterString == "completed";
+            }
+        }
+        customElements.define(TodoMvc.is, TodoMvc);
+    </script>
+</dom-module>
