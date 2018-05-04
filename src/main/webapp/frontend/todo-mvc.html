@@ -19,7 +19,7 @@
             <template is="dom-repeat" items="{{todos}}" filter="{{createFilter(filterString)}}" observe="completed">
                 <vaadin-horizontal-layout style="width: 100%" id="vaadinHorizontalLayout">
                     <vaadin-checkbox checked="[[item.completed]]" on-checked-changed="markCompletedClick"></vaadin-checkbox>
-                    <vaadin-text-field style="flex:1" value="{{item.text}}" id="vaadinTextField"></vaadin-text-field>
+                    <vaadin-text-field style="flex:1" value="{{item.text}}" id="vaadinTextField" on-keyup="editTodoText"></vaadin-text-field>
                     <vaadin-button on-click="removeTodo">
                         X
                     </vaadin-button>
@@ -80,6 +80,13 @@
 
                 this.$server.addTodo(e.target.value);
                 e.target.value="";
+            }
+            editTodoText(e) {
+                if (e.code != "Enter")
+                    return;
+
+                this.$server.updateTodoText(e.model.item, e.target.value);
+                e.target.blur();
             }
             removeTodo(e) {
                 const item = e.model.item;

@@ -43,8 +43,19 @@ public class TodoMvc extends PolymerTemplate<TodoMvc.TodoMvcModel> {
 	}
 
 	@ClientCallable
+	public void updateTodoText(Todo clientTodo, String text) {
+		Optional<Todo> todo = findTodo(clientTodo);
+		if (!todo.isPresent()) {
+			return;
+		}
+
+		System.out.println("Todo " + todo + " text updated to " + text);
+		todo.get().setText(text);
+	}
+
+	@ClientCallable
 	public void removeTodo(Todo clientTodo) {
-		Optional<Todo> todo = getModel().getTodos().stream().filter(t -> t.equals(clientTodo)).findFirst();
+		Optional<Todo> todo = findTodo(clientTodo);
 		if (!todo.isPresent()) {
 			return;
 		}
@@ -53,9 +64,13 @@ public class TodoMvc extends PolymerTemplate<TodoMvc.TodoMvcModel> {
 		getModel().getTodos().remove(todo.get());
 	}
 
+	private Optional<Todo> findTodo(Todo clientTodo) {
+		return getModel().getTodos().stream().filter(t -> t.equals(clientTodo)).findFirst();
+	}
+
 	@ClientCallable
 	public void markCompleted(Todo clientTodo, boolean completed) {
-		Optional<Todo> todo = getModel().getTodos().stream().filter(t -> t.equals(clientTodo)).findFirst();
+		Optional<Todo> todo = findTodo(clientTodo);
 		if (!todo.isPresent()) {
 			return;
 		}
