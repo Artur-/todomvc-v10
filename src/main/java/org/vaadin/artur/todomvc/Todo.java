@@ -63,15 +63,10 @@ public class Todo {
 			return true;
 		if (obj == null)
 			return false;
-		if (getClass() != obj.getClass())
+		if (!(obj instanceof Todo))
 			return false;
 		Todo other = (Todo) obj;
 		if (getId() != other.getId())
-			return false;
-		if (getText() == null) {
-			if (other.getText() != null)
-				return false;
-		} else if (!getText().equals(other.getText()))
 			return false;
 		return true;
 	}
