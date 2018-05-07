@@ -21,8 +21,8 @@
                 text-align: center;
             }
         </style>
-            <!--<vaadin-checkbox checked="{{online}}">Online</vaadin-checkbox>-->
-            <div class="top banner" hidden$="{{online}}">You are offline</div>
+        <!--<vaadin-checkbox checked="{{online}}">Online</vaadin-checkbox>-->
+        <div class="top banner" hidden$="{{online}}">You are offline</div>
         <h1>todos</h1>
         <vaadin-vertical-layout style="width: 100%;max-width: 600px;">
             <vaadin-horizontal-layout style="width: 100%;">
@@ -149,16 +149,16 @@
                     return "";
                 return "<ul><li>" + this.queue.map(cmd => {
                     if (cmd.cmd == "add") {
-                        return "Add "+cmd.text;
+                        return "Add " + cmd.text;
                     } else if (cmd.cmd == "updateText") {
-                        return "Update "+cmd.text+" to "+cmd.text;
+                        return "Update " + cmd.text + " to " + cmd.text;
                     } else if (cmd.cmd == "markCompleted") {
                         if (cmd.completed)
-                            return "Mark "+cmd.todo.text+" complete";
+                            return "Mark " + cmd.todo.text + " complete";
                         else
-                            return "Mark "+cmd.todo.text+" active";
+                            return "Mark " + cmd.todo.text + " active";
                     } else if (cmd.cmd == "remove") {
-                        return "Remove "+cmd.todo.text;
+                        return "Remove " + cmd.todo.text;
                     } else {
                         return "???";
                     }
@@ -169,7 +169,7 @@
                 this.todos.filter(item => item.completed).forEach(item => {
                     var sentToServer = this.executeOrQueue({ cmd: "remove", todo: item });
                     if (!sentToServer) {
-                        this.splice("todos",this.todos.indexOf(item),1);
+                        this.splice("todos", this.todos.indexOf(item), 1);
                     }
                 });
             }
@@ -187,7 +187,7 @@
                     return;
                 const serverUpdated = this.executeOrQueue({ cmd: "add", text: e.target.value });
                 if (!serverUpdated) {
-                    this.push("todos", {text: e.target.value});
+                    this.push("todos", { text: e.target.value });
                 }
                 e.target.value = "";
             }
@@ -215,7 +215,7 @@
                     return;
 
                 this.executeOrQueue({ cmd: "markCompleted", todo: item, completed: completed });
-                this.set('todos.' + this.todos.indexOf(item)+'.completed',completed);
+                this.set('todos.' + this.todos.indexOf(item) + '.completed', completed);
             }
             createFilter(filterString) {
                 return function (item) {
