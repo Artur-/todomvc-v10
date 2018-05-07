@@ -21,8 +21,9 @@
                 text-align: center;
             }
         </style>
-        <!--<vaadin-checkbox checked="{{online}}">Online</vaadin-checkbox>-->
-        <div class="top banner" hidden$="{{online}}">You are offline</div>
+        <div class="top banner" hidden$="{{appOnline}}">You are offline
+            <button on-click="goOnline" hidden$="[[!goOnlineVisible]]">Go online</button>
+        </div>
         <h1>todos</h1>
         <vaadin-vertical-layout style="width: 100%;max-width: 600px;">
             <vaadin-horizontal-layout style="width: 100%;">
@@ -58,7 +59,7 @@
                 </vaadin-button>
             </div>
         </vaadin-vertical-layout>
-        <div class="banner" hidden$="[[online]]">Debug, pending events:
+        <div class="banner" hidden$="[[appOnline]]">Debug, pending events:
             <div inner-h-t-m-l="[[queueDebug]]"></div>
         </div>
         <vaadin-notification id="info" delay=2000>
@@ -73,6 +74,10 @@
             static get properties() {
                 // These are purely client side UI logic properties
                 return {
+                    "todos": {
+                        type: Array,
+                        observer: 'storeTodosLocally'
+                    },
                     "filterString": {
                         type: String,
                         value: "all"
@@ -81,42 +86,74 @@
                         type: String,
                         computed: 'countItemsLeft(todos.*)'
                     },
-                    "online": {
+                    "networkOnline": {
                         type: Boolean,
                         value: navigator.onLine,
-                        observer: 'onOnlineChange'
+                        observer: 'onNetworkOnlineChange'
+                    },
+                    "appOnline": {
+                        type: Boolean,
+                        computed: 'isAppOnline(networkOnline)'
                     },
                     "queue": {
                         type: Array,
-                        value: []
+                        value: JSON.parse(localStorage.getItem("pendingQueue")) || []
                     },
                     "queueDebug": {
                         type: String,
                         computed: 'calcQueueDebug(queue.splices)'
+                    },
+                    "goOnlineVisible": {
+                        type: Boolean,
+                        computed: 'isGoOnlineVisible(networkOnline)'
                     }
-
                 }
             }
             connectedCallback() {
                 super.connectedCallback();
                 var self = this;
                 window.addEventListener("online", e => {
-                    this.online = navigator.onLine;
+                    this.networkOnline = navigator.onLine;
                 });
                 window.addEventListener("offline", e => {
-                    this.online = navigator.onLine;
+                    this.networkOnline = navigator.onLine;
                 });
-            }
 
-            onOnlineChange() {
-                if (this.online && this.queue.length > 0) {
-                    this.processCommands(this.queue);
-                    this.queue = [];
-                    this.$.info.open();
-                    this.$server.resync();
+                if (!this.networkOnline) {
+                    this.restoreLocalTodos();
                 }
             }
 
+            goOnline() {
+                // Reload will cause Flow to be started and the queue synced from localstorage
+                window.location.reload();
+            }
+            isGoOnlineVisible(networkOnline) {
+                // Started offline, now online. Need a refresh to sync 
+                // but doing it immediately would interrupt the user
+                return networkOnline && !this.appOnline;
+            }
+
+            onNetworkOnlineChange() {
+                if (!this.networkOnline) {
+                    return;
+                }
+                if (!this.appOnline) {
+                    // Started offline, now online. Need a refresh to sync 
+                    // but doing it immediately would interrupt the user
+                    return;
+                }
+                if (this.queue.length > 0) {
+                        this.processCommands(this.queue);
+                        localStorage.removeItem("pendingQueue");
+                        this.set("queue", []);
+                        this.$.info.open();
+                        this.$server.resync();
+                    }
+            }
+            isAppOnline(networkOnline) {
+                return networkOnline && this.flowStarted();
+            }
             processCommands(commands) {
                 for (var i = 0; i < commands.length; i++) {
                     const cmd = commands[i];
@@ -135,11 +172,12 @@
             }
 
             executeOrQueue(command) {
-                if (this.online) {
+                if (this.appOnline) {
                     this.processCommands([command]);
                     return true;
                 } else {
                     this.push("queue", command);
+                    localStorage.setItem("pendingQueue", JSON.stringify(this.queue));
                     return false;
                 }
             }
@@ -246,6 +284,19 @@
             }
             isCompleted(filterString) {
                 return filterString == "completed";
+            }
+
+            flowStarted() {
+                return !!window.Vaadin.Flow;
+            }
+            storeTodosLocally() {
+                localStorage.setItem("todomvc-v10-items", JSON.stringify(this.todos));
+            }
+            restoreLocalTodos() {
+                var stored = JSON.parse(localStorage.getItem("todomvc-v10-items"));
+                if (stored) {
+                    this.set("todos", stored);
+                }
             }
         }
         customElements.define(TodoMvc.is, TodoMvc);

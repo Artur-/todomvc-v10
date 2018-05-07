@@ -1,0 +1,118 @@
+<!doctype html>
+<html>
+
+<head>
+  <link rel="manifest" href="manifest.json">
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <base href=".">
+  <title>Todo Vaadin 10 - offline</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      height: 100vh;
+      width: 100vw;
+      margin: 0;
+    }
+
+    .v-reconnect-dialog {
+      position: absolute;
+      top: 1em;
+      right: 1em;
+      border: 1px solid black;
+      padding: 1em;
+    }
+
+    .v-system-error {
+      color: red;
+      background: white;
+      position: absolute;
+      top: 1em;
+      right: 1em;
+      border: 1px solid black;
+      padding: 1em;
+      z-index: 10000;
+    }
+  </style>
+  <script type="text/javascript" src="./frontend/bower_components/webcomponentsjs/webcomponents-loader.js"></script>
+
+  <link rel="import" href="./frontend/bower_components/vaadin-checkbox/theme/lumo/vaadin-checkbox.html">
+  <link rel="import" href="./frontend/bower_components/polymer/lib/elements/array-selector.html">
+  <link rel="import" href="./frontend/bower_components/polymer/lib/utils/array-splice.html">
+  <link rel="import" href="./frontend/bower_components/polymer/lib/utils/import-href.html">
+  <link rel="import" href="./frontend/bower_components/polymer/lib/utils/html-tag.html">
+  <link rel="import" href="./frontend/bower_components/vaadin-lumo-styles/version.html">
+  <link rel="import" href="./frontend/bower_components/polymer/lib/utils/templatize.html">
+  <link rel="import" href="./frontend/bower_components/polymer/lib/mixins/properties-changed.html">
+  <link rel="import" href="./frontend/bower_components/vaadin-ordered-layout/theme/lumo/vaadin-ordered-layout.html">
+  <link rel="import" href="./frontend/bower_components/polymer/lib/utils/path.html">
+  <link rel="import" href="./frontend/bower_components/polymer/lib/legacy/polymer-fn.html">
+  <link rel="import" href="./frontend/bower_components/vaadin-text-field/src/vaadin-text-field-mixin.html">
+  <link rel="import" href="./frontend/bower_components/polymer/lib/utils/unresolved.html">
+  <link rel="import" href="./frontend/bower_components/vaadin-ordered-layout/theme/lumo/vaadin-horizontal-layout.html">
+  <link rel="import" href="./frontend/bower_components/vaadin-element-mixin/vaadin-element-mixin.html">
+  <link rel="import" href="./frontend/bower_components/polymer/lib/mixins/template-stamp.html">
+  <link rel="import" href="./frontend/bower_components/polymer/lib/mixins/dir-mixin.html">
+  <link rel="import" href="./frontend/bower_components/shadycss/custom-style-interface.html">
+  <link rel="import" href="./frontend/bower_components/vaadin-checkbox/vaadin-checkbox.html">
+  <link rel="import" href="./frontend/bower_components/polymer/lib/mixins/element-mixin.html">
+  <link rel="import" href="./frontend/bower_components/polymer/lib/utils/mixin.html">
+  <link rel="import" href="./frontend/bower_components/polymer/lib/mixins/property-effects.html">
+  <link rel="import" href="./frontend/bower_components/polymer/lib/utils/settings.html">
+  <link rel="import" href="./frontend/bower_components/vaadin-button/theme/lumo/vaadin-button.html">
+  <link rel="import" href="./frontend/bower_components/polymer/lib/utils/debounce.html">
+  <link rel="import" href="./frontend/bower_components/polymer/lib/utils/gestures.html">
+  <link rel="import" href="./frontend/bower_components/polymer/lib/elements/dom-if.html">
+  <link rel="import" href="./frontend/bower_components/polymer/lib/mixins/properties-mixin.html">
+  <link rel="import" href="./frontend/bower_components/polymer/lib/mixins/gesture-event-listeners.html">
+  <link rel="import" href="./frontend/bower_components/polymer/lib/elements/dom-repeat.html">
+  <link rel="import" href="./frontend/bower_components/vaadin-notification/theme/lumo/vaadin-notification.html">
+  <link rel="import" href="./frontend/bower_components/vaadin-text-field/vaadin-text-field.html">
+  <link rel="import" href="./frontend/bower_components/polymer/polymer.html">
+  <link rel="import" href="./frontend/bower_components/vaadin-ordered-layout/theme/lumo/vaadin-vertical-layout.html">
+  <link rel="import" href="./frontend/bower_components/polymer/lib/utils/flattened-nodes-observer.html">
+  <link rel="import" href="./frontend/bower_components/polymer/lib/legacy/polymer.dom.html">
+  <link rel="import" href="./frontend/bower_components/vaadin-lumo-styles/spacing.html">
+  <link rel="import" href="./frontend/bower_components/polymer/lib/utils/resolve-url.html">
+  <link rel="import" href="./frontend/bower_components/polymer/lib/elements/custom-style.html">
+  <link rel="import" href="./frontend/bower_components/vaadin-button/vaadin-button.html">
+  <link rel="import" href="./frontend/bower_components/vaadin-text-field/theme/lumo/vaadin-text-field.html">
+  <link rel="import" href="./frontend/todo-mvc.html">
+  <link rel="import" href="./frontend/bower_components/polymer/lib/utils/boot.html">
+  <link rel="import" href="./frontend/bower_components/vaadin-ordered-layout/vaadin-vertical-layout.html">
+  <link rel="import" href="./frontend/bower_components/polymer/lib/elements/dom-module.html">
+  <link rel="import" href="./frontend/bower_components/polymer/lib/elements/dom-bind.html">
+  <link rel="import" href="./frontend/bower_components/polymer/polymer-element.html">
+  <link rel="import" href="./frontend/bower_components/shadycss/apply-shim.html">
+  <link rel="import" href="./frontend/bower_components/polymer/lib/mixins/mutable-data.html">
+  <link rel="import" href="./frontend/bower_components/vaadin-ordered-layout/vaadin-horizontal-layout.html">
+  <link rel="import" href="./frontend/bower_components/vaadin-themable-mixin/vaadin-themable-mixin.html">
+  <link rel="import" href="./frontend/bower_components/vaadin-lumo-styles/style.html">
+  <link rel="import" href="./frontend/bower_components/vaadin-control-state-mixin/vaadin-control-state-mixin.html">
+  <link rel="import" href="./frontend/bower_components/polymer/lib/utils/async.html">
+  <link rel="import" href="./frontend/bower_components/vaadin-notification/vaadin-notification.html">
+  <link rel="import" href="./frontend/bower_components/vaadin-lumo-styles/typography.html">
+  <link rel="import" href="./frontend/bower_components/vaadin-lumo-styles/sizing.html">
+  <link rel="import" href="./frontend/bower_components/polymer/lib/utils/render-status.html">
+  <link rel="import" href="./frontend/bower_components/polymer/lib/utils/flush.html">
+  <link rel="import" href="./frontend/bower_components/polymer/lib/legacy/class.html">
+  <link rel="import" href="./frontend/bower_components/polymer/lib/mixins/property-accessors.html">
+  <link rel="import" href="./frontend/bower_components/polymer/lib/legacy/mutable-data-behavior.html">
+  <link rel="import" href="./frontend/bower_components/polymer/lib/legacy/templatizer-behavior.html">
+  <link rel="import" href="./frontend/bower_components/polymer/lib/utils/style-gather.html">
+  <link rel="import" href="./frontend/bower_components/vaadin-development-mode-detector/vaadin-development-mode-detector.html">
+  <link rel="import" href="./frontend/bower_components/polymer/lib/utils/case-map.html">
+  <link rel="import" href="./frontend/bower_components/vaadin-lumo-styles/color.html">
+  <link rel="import" href="./frontend/bower_components/polymer/lib/legacy/legacy-element-mixin.html">
+  <link rel="import" href="./frontend/bower_components/vaadin-lumo-styles/color.html">
+  <link rel="import" href="./frontend/bower_components/vaadin-lumo-styles/typography.html">
+  <link rel="import" href="./frontend/bower_components/vaadin-lumo-styles/sizing.html">
+  <link rel="import" href="./frontend/bower_components/vaadin-lumo-styles/spacing.html">
+  <link rel="import" href="./frontend/bower_components/vaadin-lumo-styles/style.html">
+  <link rel="import" href="./frontend/bower_components/vaadin-lumo-styles/icons.html">
+</head>
+
+<body>
+  <todo-mvc id="app"></todo-mvc>
+</body>
+
+</html>

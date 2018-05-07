@@ -14,6 +14,10 @@ import com.vaadin.flow.component.page.Push;
 import com.vaadin.flow.component.page.Viewport;
 import com.vaadin.flow.component.polymertemplate.PolymerTemplate;
 import com.vaadin.flow.router.Route;
+import com.vaadin.flow.server.InitialPageSettings;
+import com.vaadin.flow.server.PageConfigurator;
+import com.vaadin.flow.server.InitialPageSettings.Position;
+import com.vaadin.flow.server.InitialPageSettings.WrapMode;
 import com.vaadin.flow.templatemodel.TemplateModel;
 
 @Tag("todo-mvc")
@@ -21,7 +25,7 @@ import com.vaadin.flow.templatemodel.TemplateModel;
 @Route("")
 @Viewport("width=device-width, initial-scale=1.0")
 @Push
-public class TodoMvc extends PolymerTemplate<TodoMvc.TodoMvcModel> {
+public class TodoMvc extends PolymerTemplate<TodoMvc.TodoMvcModel> implements PageConfigurator {
 
 	public interface TodoMvcModel extends TemplateModel {
 
@@ -86,8 +90,16 @@ public class TodoMvc extends PolymerTemplate<TodoMvc.TodoMvcModel> {
 
 	@ClientCallable
 	public void resync() {
-		// Needed because of https://github.com/vaadin/flow/issues/4080 
+		// Needed because of https://github.com/vaadin/flow/issues/4080
 		getModel().setTodos(getModel().getTodos());
+	}
+
+	@Override
+	public void configurePage(InitialPageSettings settings) {
+		settings.addLink(Position.PREPEND, "manifest", "manifest.json");
+		settings.addInlineWithContents("if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');",
+				WrapMode.JAVASCRIPT);
+
 	}
 
 }
