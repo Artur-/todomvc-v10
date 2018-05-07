@@ -84,4 +84,10 @@ public class TodoMvc extends PolymerTemplate<TodoMvc.TodoMvcModel> {
 		SharedTodos.get().updateTodo(clientTodo, completed);
 	}
 
+	@ClientCallable
+	public void resync() {
+		// Needed because of https://github.com/vaadin/flow/issues/4080 
+		getModel().setTodos(getModel().getTodos());
+	}
+
 }

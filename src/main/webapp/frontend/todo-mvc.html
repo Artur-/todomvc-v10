@@ -1,13 +1,28 @@
 <link rel="import" href="bower_components/polymer/polymer.html">
-<link rel="import" href="bower_components/vaadin-ordered-layout/src/vaadin-horizontal-layout.html">
-<link rel="import" href="bower_components/vaadin-button/src/vaadin-button.html">
+<link rel="import" href="bower_components/vaadin-ordered-layout/vaadin-horizontal-layout.html">
+<link rel="import" href="bower_components/vaadin-button/vaadin-button.html">
 <link rel="import" href="bower_components/polymer/lib/elements/dom-repeat.html">
-<link rel="import" href="bower_components/vaadin-checkbox/src/vaadin-checkbox.html">
-<link rel="import" href="bower_components/vaadin-text-field/src/vaadin-text-field.html">
-<link rel="import" href="bower_components/vaadin-ordered-layout/src/vaadin-vertical-layout.html">
+<link rel="import" href="bower_components/vaadin-checkbox/vaadin-checkbox.html">
+<link rel="import" href="bower_components/vaadin-text-field/vaadin-text-field.html">
+<link rel="import" href="bower_components/vaadin-ordered-layout/vaadin-vertical-layout.html">
+<link rel="import" href="bower_components/vaadin-notification/vaadin-notification.html">
 
 <dom-module id="todo-mvc">
     <template>
+        <style>
+            .banner {
+                background: lightyellow;
+                width: 100%;
+                padding: 1em;
+                border: 1px solid gray;
+            }
+
+            .top {
+                text-align: center;
+            }
+        </style>
+            <!--<vaadin-checkbox checked="{{online}}">Online</vaadin-checkbox>-->
+            <div class="top banner" hidden$="{{online}}">You are offline</div>
         <h1>todos</h1>
         <vaadin-vertical-layout style="width: 100%;max-width: 600px;">
             <vaadin-horizontal-layout style="width: 100%;">
@@ -43,6 +58,12 @@
                 </vaadin-button>
             </div>
         </vaadin-vertical-layout>
+        <div class="banner" hidden$="[[online]]">Debug, pending events:
+            <div inner-h-t-m-l="[[queueDebug]]"></div>
+        </div>
+        <vaadin-notification id="info" delay=2000>
+            <template>Offline changes have been merged</template>
+        </vaadin-notification>
     </template>
     <script>
         class TodoMvc extends Polymer.Element {
@@ -59,11 +80,98 @@
                     "itemsLeft": {
                         type: String,
                         computed: 'countItemsLeft(todos.*)'
+                    },
+                    "online": {
+                        type: Boolean,
+                        value: navigator.onLine,
+                        observer: 'onOnlineChange'
+                    },
+                    "queue": {
+                        type: Array,
+                        value: []
+                    },
+                    "queueDebug": {
+                        type: String,
+                        computed: 'calcQueueDebug(queue.splices)'
+                    }
+
+                }
+            }
+            connectedCallback() {
+                super.connectedCallback();
+                var self = this;
+                window.addEventListener("online", e => {
+                    this.online = navigator.onLine;
+                });
+                window.addEventListener("offline", e => {
+                    this.online = navigator.onLine;
+                });
+            }
+
+            onOnlineChange() {
+                if (this.online && this.queue.length > 0) {
+                    this.processCommands(this.queue);
+                    this.queue = [];
+                    this.$.info.open();
+                    this.$server.resync();
+                }
+            }
+
+            processCommands(commands) {
+                for (var i = 0; i < commands.length; i++) {
+                    const cmd = commands[i];
+                    if (cmd.cmd == "add") {
+                        this.$server.addTodo(cmd.text);
+                    } else if (cmd.cmd == "updateText") {
+                        this.$server.updateTodoText(cmd.todo, cmd.text);
+                    } else if (cmd.cmd == "markCompleted") {
+                        this.$server.markCompleted(cmd.todo, cmd.completed);
+                    } else if (cmd.cmd == "remove") {
+                        this.$server.removeTodo(cmd.todo);
+                    } else {
+                        console.error("Unknown command:" + cmd.cmd);
                     }
                 }
             }
+
+            executeOrQueue(command) {
+                if (this.online) {
+                    this.processCommands([command]);
+                    return true;
+                } else {
+                    this.push("queue", command);
+                    return false;
+                }
+            }
+
+            calcQueueDebug(splices) {
+                if (this.queue.length == 0)
+                    return "";
+                return "<ul><li>" + this.queue.map(cmd => {
+                    if (cmd.cmd == "add") {
+                        return "Add "+cmd.text;
+                    } else if (cmd.cmd == "updateText") {
+                        return "Update "+cmd.text+" to "+cmd.text;
+                    } else if (cmd.cmd == "markCompleted") {
+                        if (cmd.completed)
+                            return "Mark "+cmd.todo.text+" complete";
+                        else
+                            return "Mark "+cmd.todo.text+" active";
+                    } else if (cmd.cmd == "remove") {
+                        return "Remove "+cmd.todo.text;
+                    } else {
+                        return "???";
+                    }
+                    cmd.cmd + " " + cmd.text
+                }).join("<li>") + "</ul>";
+            }
             clearCompleted() {
-                this.todos.filter(item => item.completed).forEach(item => this.$server.removeTodo(item));
+                this.todos.filter(item => item.completed).forEach(item => {
+                    var sentToServer = this.executeOrQueue({ cmd: "remove", todo: item });
+                    if (!sentToServer) {
+                        this.splice("todos",this.todos.indexOf(item),1);
+                    }
+                });
             }
             hasCompletedItems(todos) {
                 return this.todos.filter(item => item.completed).length > 0;
@@ -77,20 +185,26 @@
             newTodoInput(e) {
                 if (e.code != "Enter")
                     return;
-
-                this.$server.addTodo(e.target.value);
-                e.target.value="";
+                const serverUpdated = this.executeOrQueue({ cmd: "add", text: e.target.value });
+                if (!serverUpdated) {
+                    this.push("todos", {text: e.target.value});
+                }
+                e.target.value = "";
             }
             editTodoText(e) {
                 if (e.code != "Enter")
                     return;
 
-                this.$server.updateTodoText(e.model.item, e.target.value);
+                this.executeOrQueue({ cmd: "updateText", todo: e.model.item, text: e.target.value });
+
                 e.target.blur();
             }
             removeTodo(e) {
                 const item = e.model.item;
-                this.$server.removeTodo(item);
+                const serverUpdated = this.executeOrQueue({ cmd: "remove", todo: item });
+                if (!serverUpdated) {
+                    this.splice("todos", this.todos.indexOf(item), 1);
+                }
             }
             markCompletedClick(e) {
                 const item = e.model.item;
@@ -99,8 +213,9 @@
             markCompleted(item, completed) {
                 if (item.completed == completed)
                     return;
-                this.$server.markCompleted(item, completed);
-                item.completed = completed;
+
+                this.executeOrQueue({ cmd: "markCompleted", todo: item, completed: completed });
+                this.set('todos.' + this.todos.indexOf(item)+'.completed',completed);
             }
             createFilter(filterString) {
                 return function (item) {
