@@ -96,7 +96,7 @@ public class TodoMvc extends PolymerTemplate<TodoMvc.TodoMvcModel> implements Pa
 
 	@Override
 	public void configurePage(InitialPageSettings settings) {
-		settings.addLink(Position.PREPEND, "manifest", "manifest.json");
+		settings.addLink(Position.PREPEND, "manifest", "todomvc.webmanifest");
 		settings.addInlineWithContents("if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');",
 				WrapMode.JAVASCRIPT);
 
