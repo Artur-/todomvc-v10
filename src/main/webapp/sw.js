@@ -1,10 +1,11 @@
 // Important: update the version each time you change any of the files listed below
-var version = 3;
+var version = 4;
 // define your offline-page and assets used by it
 var manifest = 'manifest.json';
 var offlinePage = 'offline.html';
 var offlineAssets = [
   'frontend/bower_components/webcomponentsjs/webcomponents-loader.js',
+  'frontend/bower_components/webcomponentsjs/webcomponents-hi.js',
   'frontend/bower_components/polymer/polymer.html',
 'frontend/bower_components/vaadin-ordered-layout/vaadin-horizontal-layout.html',
 'frontend/bower_components/vaadin-button/vaadin-button.html',
